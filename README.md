@@ -172,7 +172,8 @@ totopick/
 
 ### 심화 가이드
 - 🌐 **[GitHub & Vercel 배포 완벽 가이드](docs/GITHUB-VERCEL-DEPLOYMENT.md)** - Git 설치부터 배포까지 A to Z
-- 🚀 **[Vercel 배포 가이드](docs/VERCEL-DEPLOYMENT.md)** - 사이트를 실제로 배포하기
+- 🚀 **[정식 배포 가이드](docs/PRODUCTION-DEPLOYMENT.md)** - 커스텀 도메인, 서버 추천, 프로덕션 환경 구축
+- 📦 **[Vercel 배포 가이드](docs/VERCEL-DEPLOYMENT.md)** - 사이트를 실제로 배포하기
 - 🔧 **[Git 설치 가이드](docs/GIT-INSTALLATION.md)** - Git/GitHub Desktop 설치 방법
 - 📱 [SMS 인증 전환 가이드](docs/SMS-SETUP.md)
 - 👑 [관리자 매뉴얼](docs/ADMIN-GUIDE.md)
