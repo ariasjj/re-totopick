@@ -1,0 +1,229 @@
+// Prisma 스키마 - TOTOPICK 데이터베이스 설계
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 사용자 역할
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// 게시판 타입
+enum BoardType {
+  TOTO_SITE      // 토토사이트
+  MUKTU_REPORT   // 먹튀제보
+  SCAM_REPORT    // 사기신고
+  TOTO_INFO      // 토토정보
+  SPORTS_ANALYSIS // 스포츠분석
+  PROMOTION      // 홍보방
+  REVIEW         // 토토후기
+  NOTICE         // 공지사항
+  FREE           // 자유게시판
+}
+
+// 신고 상태
+enum ReportStatus {
+  PENDING    // 접수
+  REVIEWING  // 확인중
+  COMPLETED  // 처리완료
+  REJECTED   // 반려
+}
+
+// 문의 상태
+enum InquiryStatus {
+  PENDING   // 미답변
+  ANSWERED  // 답변완료
+}
+
+// 포인트 타입
+enum PointType {
+  SIGNUP         // 회원가입
+  ATTENDANCE     // 출석체크
+  POST_CREATE    // 게시글 작성
+  COMMENT_CREATE // 댓글 작성
+  ADMIN_ADJUST   // 관리자 조정
+}
+
+// 1. 사용자 테이블
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  nickname      String    @unique
+  phone         String?   @unique
+  phoneVerified Boolean   @default(false)
+  role          UserRole  @default(USER)
+  points        Int       @default(1000) // 가입 시 1000점 지급
+  isActive      Boolean   @default(true) // 계정 활성화 여부
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // 관계
+  posts         Post[]
+  comments      Comment[]
+  pointHistory  Point[]
+  attendances   Attendance[]
+  inquiries     Inquiry[]
+  siteReports   SiteReport[]
+
+  @@index([email])
+  @@index([nickname])
+}
+
+// 2. 핸드폰 인증 테이블
+model PhoneVerification {
+  id          String   @id @default(cuid())
+  phone       String
+  code        String   // 인증번호 (테스트: 123456)
+  verified    Boolean  @default(false)
+  expiresAt   DateTime // 만료 시간 (5분)
+  createdAt   DateTime @default(now())
+
+  @@index([phone])
+}
+
+// 3. 게시판 테이블 (설정용, 실제로는 enum으로 관리)
+model Board {
+  id          String    @id @default(cuid())
+  type        BoardType @unique
+  name        String
+  description String?
+  order       Int       @default(0) // 메뉴 순서
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // 관계
+  posts       Post[]
+}
+
+// 4. 게시글 테이블
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  content     String    @db.Text
+  boardId     String
+  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views       Int       @default(0)
+  likes       Int       @default(0)
+  isNotice    Boolean   @default(false) // 공지사항 여부
+  isHidden    Boolean   @default(false) // 숨김 여부
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // 관계
+  comments    Comment[]
+
+  @@index([boardId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+// 5. 댓글 테이블
+model Comment {
+  id          String    @id @default(cuid())
+  content     String    @db.Text
+  postId      String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId    String?   // 대댓글용
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
+  isHidden    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([postId])
+  @@index([authorId])
+}
+
+// 6. 포인트 내역 테이블
+model Point {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int        // 증감 포인트 (양수: 적립, 음수: 차감)
+  type        PointType
+  description String?
+  createdAt   DateTime   @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// 7. 출석체크 테이블
+model Attendance {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime @default(now()) @db.Date
+  points        Int      @default(100) // 지급된 포인트
+  consecutiveDays Int    @default(1) // 연속 출석 일수
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+// 8. 1:1 문의 테이블
+model Inquiry {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  content     String        @db.Text
+  isSecret    Boolean       @default(true) // 비밀글 여부
+  status      InquiryStatus @default(PENDING)
+  answer      String?       @db.Text
+  answeredAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// 9. 먹튀/사기 신고 테이블
+model SiteReport {
+  id          String       @id @default(cuid())
+  siteName    String       // 사이트명
+  siteUrl     String?      // 사이트 URL
+  reportType  String       // 신고 유형 (먹튀/사기)
+  amount      Int?         // 피해금액
+  evidence    String?      @db.Text // 증거자료 (이미지 URL 등)
+  description String       @db.Text // 상세 내용
+  reporterId  String
+  reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  status      ReportStatus @default(PENDING)
+  adminNote   String?      @db.Text // 관리자 메모
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 10. 방문자 통계 테이블
+model Visitor {
+  id          String   @id @default(cuid())
+  ip          String
+  userAgent   String?
+  page        String?  // 방문 페이지
+  createdAt   DateTime @default(now()) @db.Date
+
+  @@index([ip])
+  @@index([createdAt])
+}
+
