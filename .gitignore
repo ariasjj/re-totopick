@@ -42,3 +42,10 @@ prisma/dev.db-journal
 
 # 계획 파일 (사용자가 삭제 원할 수 있음)
 totopick.plan.md
+
+# 민감한 파일들
+*key.txt
+*token.txt
+*secret.txt
+*.key
+.env.backup
