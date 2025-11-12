@@ -171,6 +171,7 @@ totopick/
 - 🤖 **[자동 게시글 업로드 가이드](docs/AUTO-POST-GUIDE.md)** - 매일 자동으로 게시글 올리기
 
 ### 심화 가이드
+- 🌐 **[GitHub & Vercel 배포 완벽 가이드](docs/GITHUB-VERCEL-DEPLOYMENT.md)** - Git 설치부터 배포까지 A to Z
 - 🚀 **[Vercel 배포 가이드](docs/VERCEL-DEPLOYMENT.md)** - 사이트를 실제로 배포하기
 - 🔧 **[Git 설치 가이드](docs/GIT-INSTALLATION.md)** - Git/GitHub Desktop 설치 방법
 - 📱 [SMS 인증 전환 가이드](docs/SMS-SETUP.md)
