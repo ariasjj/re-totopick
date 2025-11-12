@@ -32,8 +32,12 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
+          // 이메일 또는 아이디로 사용자 찾기
+          const isEmail = credentials.email.includes('@')
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email },
+            where: isEmail 
+              ? { email: credentials.email }
+              : { username: credentials.email },
           })
 
           if (!user) {

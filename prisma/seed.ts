@@ -28,9 +28,10 @@ async function main() {
   await prisma.user.deleteMany()
 
   // 1. 관리자 계정 생성
-  const hashedPassword = await bcrypt.hash('admin1234', 10)
+  const hashedPassword = await bcrypt.hash('admin123!', 10)
   const admin = await prisma.user.create({
     data: {
+      username: 'admin',
       email: 'admin@totopick.com',
       password: hashedPassword,
       nickname: '관리자',
@@ -45,8 +46,9 @@ async function main() {
   // 2. 테스트 사용자 생성
   const testUser = await prisma.user.create({
     data: {
+      username: 'testuser',
       email: 'user@test.com',
-      password: await bcrypt.hash('test1234', 10),
+      password: await bcrypt.hash('user123!', 10),
       nickname: '테스트유저',
       phone: '01098765432',
       phoneVerified: true,

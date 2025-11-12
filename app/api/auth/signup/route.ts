@@ -7,6 +7,10 @@ import { z } from "zod"
 
 // 회원가입 유효성 검사 스키마
 const signupSchema = z.object({
+  username: z.string()
+    .min(4, "아이디는 최소 4자 이상이어야 합니다.")
+    .max(20, "아이디는 최대 20자까지 가능합니다.")
+    .regex(/^[a-zA-Z0-9_]+$/, "아이디는 영문, 숫자, _만 사용 가능합니다."),
   email: z.string().email("올바른 이메일 형식이 아닙니다."),
   password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다."),
   nickname: z.string().min(2, "닉네임은 최소 2자 이상이어야 합니다."),
@@ -26,7 +30,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password, nickname, phone } = validation.data
+    const { username, email, password, nickname, phone } = validation.data
+
+    // 아이디 중복 확인
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
+    })
+    if (existingUsername) {
+      return NextResponse.json(
+        { error: "이미 사용 중인 아이디입니다." },
+        { status: 400 }
+      )
+    }
 
     // 이메일 중복 확인
     const existingEmail = await prisma.user.findUnique({
@@ -86,6 +101,7 @@ export async function POST(request: NextRequest) {
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
+          username,
           email,
           password: hashedPassword,
           nickname,

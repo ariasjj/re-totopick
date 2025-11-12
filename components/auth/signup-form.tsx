@@ -23,6 +23,10 @@ import Link from "next/link"
 import { Loader2, Check } from "lucide-react"
 
 const formSchema = z.object({
+  username: z.string()
+    .min(4, "아이디는 최소 4자 이상이어야 합니다.")
+    .max(20, "아이디는 최대 20자까지 가능합니다.")
+    .regex(/^[a-zA-Z0-9_]+$/, "아이디는 영문, 숫자, _만 사용 가능합니다."),
   email: z.string().email("올바른 이메일 형식이 아닙니다."),
   password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다."),
   passwordConfirm: z.string(),
@@ -45,6 +49,7 @@ export function SignUpForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      username: "",
       email: "",
       password: "",
       passwordConfirm: "",
@@ -144,6 +149,7 @@ export function SignUpForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          username: values.username,
           email: values.email,
           password: values.password,
           nickname: values.nickname,
@@ -191,6 +197,27 @@ export function SignUpForm() {
                 🔐 테스트 인증번호: <strong>{testCode}</strong>
               </div>
             )}
+
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>아이디</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="영문, 숫자, _ 만 입력 가능 (4-20자)"
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    로그인 시 사용할 아이디입니다
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

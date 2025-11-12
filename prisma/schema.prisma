@@ -54,6 +54,7 @@ enum PointType {
 // 1. 사용자 테이블
 model User {
   id            String    @id @default(cuid())
+  username      String    @unique // 아이디 (로그인용)
   email         String    @unique
   password      String
   nickname      String    @unique
@@ -74,6 +75,7 @@ model User {
   siteReports   SiteReport[]
 
   @@index([email])
+  @@index([username])
   @@index([nickname])
 }
 
