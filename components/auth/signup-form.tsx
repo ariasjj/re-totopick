@@ -41,30 +41,57 @@ export function SignUpForm() {
     setError("")
     
     try {
+      console.log("📱 인증번호 발송 시작...")
+      
+      // 타임아웃 설정 (10초)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        controller.abort()
+        console.log("⏱️ 요청 시간 초과")
+      }, 10000)
+
       const res = await fetch("/api/auth/phone/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone }),
+        signal: controller.signal,
       })
 
+      clearTimeout(timeoutId)
       const data = await res.json()
+      console.log("📡 API 응답:", data)
 
-      if (data.code) {
+      if (res.ok && data.code) {
+        // 성공: 테스트 인증번호 받음
         setTestCode(data.code)
         setShowCodeInput(true)
-        alert(`✅ 인증번호: ${data.code}\n\n위 번호를 입력해주세요`)
-      } else {
-        setTestCode("123456")
+        console.log("✅ 인증번호 발송 성공")
+        alert(`✅ 인증번호가 발송되었습니다!\n\n📱 테스트 인증번호: ${data.code}\n\n위 번호를 입력해주세요`)
+      } else if (res.ok) {
+        // 성공했지만 코드가 없음 (실제 SMS 발송)
         setShowCodeInput(true)
-        alert("⚠️ SMS 발송 실패. 테스트 모드: 123456")
+        alert("✅ 인증번호가 발송되었습니다!\n\nSMS로 받은 인증번호를 입력해주세요")
+      } else {
+        // 실패
+        throw new Error(data.error || "인증번호 발송 실패")
       }
-    } catch (error) {
-      console.error(error)
+    } catch (error: any) {
+      console.error("❌ 인증번호 발송 에러:", error)
+      
+      // 에러 시 테스트 모드로 전환
       setTestCode("123456")
       setShowCodeInput(true)
-      alert("⚠️ 오류 발생. 테스트 모드: 123456")
+      
+      if (error.name === 'AbortError') {
+        alert("⏱️ 요청 시간이 초과되었습니다\n\n테스트 모드로 전환합니다\n인증번호: 123456")
+      } else {
+        alert(`❌ ${error.message || '인증번호 발송 중 오류 발생'}\n\n테스트 모드로 전환합니다\n인증번호: 123456`)
+      }
+      
+      setError("테스트 모드가 활성화되었습니다. 인증번호 123456을 입력하세요")
     } finally {
       setIsLoading(false)
+      console.log("📱 인증번호 발송 프로세스 완료")
     }
   }
 
@@ -158,13 +185,17 @@ export function SignUpForm() {
       }
 
       console.log("✅ 회원가입 성공!")
+      
+      // 성공 메시지 표시
+      alert("🎉 회원가입이 완료되었습니다!\n\n✅ 가입 축하 1,000P가 지급되었습니다!\n\n이제 로그인하실 수 있습니다.")
+      
       setSuccess(true)
       
     } catch (error: any) {
       console.error("❌ 에러:", error)
       const msg = error.message || "회원가입 중 오류 발생"
       setError(msg)
-      alert(`❌ ${msg}`)
+      alert(`❌ 회원가입 실패\n\n${msg}`)
     } finally {
       setIsLoading(false)
     }
