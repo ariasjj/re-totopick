@@ -58,10 +58,12 @@ export class AligoSMSService implements SMSService {
 export function getSMSService(): SMSService {
   const mode = process.env.SMS_MODE || 'test'
   
+  // 실제 SMS 발송 모드
   if (mode === 'production') {
     return new AligoSMSService()
   }
   
+  // 테스트/시뮬레이션 모드 (콘솔 출력)
   return new MockSMSService()
 }
 
