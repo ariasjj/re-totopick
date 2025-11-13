@@ -46,6 +46,7 @@ export function SignUpForm() {
   const [codeVerified, setCodeVerified] = useState(false)
   const [testCode, setTestCode] = useState<string>("")
   const [testMode, setTestMode] = useState(false) // 테스트 모드
+  const [signupSuccess, setSignupSuccess] = useState(false) // 회원가입 성공 상태
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -178,15 +179,55 @@ export function SignUpForm() {
         return
       }
 
-      // 회원가입 성공 - 축하 메시지
-      alert(`🎉 회원가입을 축하합니다!\n\n가입 축하 포인트 1,000P가 지급되었습니다.\n로그인 후 다양한 서비스를 이용하실 수 있습니다.`)
-      router.push("/auth/signin")
+      // 회원가입 성공
+      setSignupSuccess(true)
     } catch (error) {
       console.error("회원가입 에러:", error)
       setError("회원가입 중 오류가 발생했습니다.")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // 회원가입 성공 화면
+  if (signupSuccess) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">🎉 회원가입 완료!</CardTitle>
+          <CardDescription className="text-center">
+            토토픽에 오신 것을 환영합니다
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 space-y-3">
+            <div className="text-center space-y-2">
+              <p className="text-lg font-semibold text-green-800">
+                ✨ 회원가입이 완료되었습니다!
+              </p>
+              <p className="text-sm text-green-700">
+                가입 축하 포인트 <strong className="text-lg">1,000P</strong>가 지급되었습니다.
+              </p>
+            </div>
+            <div className="border-t border-green-200 pt-3 space-y-1">
+              <p className="text-sm text-green-600 text-center">
+                💰 출석체크로 매일 100P 적립<br />
+                ✍️ 게시글 작성 시 10P 적립<br />
+                💬 댓글 작성 시 5P 적립
+              </p>
+            </div>
+          </div>
+          
+          <Button
+            onClick={() => router.push("/auth/signin")}
+            className="w-full h-12 text-lg"
+            size="lg"
+          >
+            로그인하러 가기 →
+          </Button>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
