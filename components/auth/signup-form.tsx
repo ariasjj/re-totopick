@@ -241,9 +241,7 @@ export function SignUpForm() {
       console.log("========================================")
       console.log("생성된 사용자:", data.user)
       
-      // 성공 메시지 표시
-      alert("🎉 회원가입이 완료되었습니다!\n\n✅ 가입 축하 1,000P가 지급되었습니다!\n\n이제 로그인하실 수 있습니다.")
-      
+      // 성공 화면으로 전환 (alert 제거하고 UI로만 표시)
       setSuccess(true)
       
     } catch (error: any) {
@@ -262,32 +260,63 @@ export function SignUpForm() {
   // 성공 화면
   if (success) {
     return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
+      <Card className="w-full max-w-md mx-auto border-4 border-green-400 shadow-2xl">
+        <CardHeader className="text-center pb-4 bg-gradient-to-b from-green-50 to-white">
+          <div className="mx-auto mb-4 w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+            <CheckCircle2 className="w-16 h-16 text-green-600" />
           </div>
-          <CardTitle className="text-3xl font-bold">회원가입 완료!</CardTitle>
-          <CardDescription className="text-lg">토토픽에 오신 것을 환영합니다</CardDescription>
+          <CardTitle className="text-4xl font-extrabold text-green-800 mb-2">
+            ✅ 회원가입 완료!
+          </CardTitle>
+          <CardDescription className="text-xl font-semibold text-gray-700">
+            토토픽에 오신 것을 환영합니다! 🎊
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-8 text-center shadow-sm">
-            <p className="text-2xl font-bold text-green-800 mb-4">
+        <CardContent className="space-y-6 pb-8">
+          {/* 포인트 지급 안내 */}
+          <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border-4 border-green-400 rounded-2xl p-8 text-center shadow-xl">
+            <p className="text-3xl font-bold text-green-900 mb-6 animate-pulse">
               🎉 가입 축하합니다! 🎉
             </p>
-            <div className="text-center">
-              <p className="text-gray-700 text-lg mb-2">가입 축하 포인트</p>
-              <p className="text-5xl font-bold text-green-600">1,000P</p>
-              <p className="text-gray-600 mt-2">적립 완료</p>
+            <div className="bg-white rounded-xl p-6 border-2 border-green-300 shadow-inner">
+              <p className="text-gray-700 text-xl mb-3 font-semibold">가입 축하 포인트</p>
+              <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600 mb-3">
+                1,000P
+              </p>
+              <p className="text-green-700 font-bold text-lg">💰 즉시 적립 완료!</p>
             </div>
           </div>
+
+          {/* 안내 메시지 */}
+          <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 text-center">
+            <p className="text-sm font-semibold text-blue-900 mb-2">
+              📋 이제 로그인하시면
+            </p>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>✅ 다양한 토토사이트 정보 확인</li>
+              <li>✅ 먹튀 검증 및 신고</li>
+              <li>✅ 포인트 적립 및 사용</li>
+            </ul>
+          </div>
+
+          {/* 로그인 버튼 */}
           <Button 
             onClick={() => router.push("/auth/signin")} 
-            className="w-full h-14 text-lg font-semibold"
+            className="w-full h-16 text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-xl"
             size="lg"
           >
-            로그인하러 가기 →
+            🔐 로그인하러 가기 →
           </Button>
+
+          {/* 성공 확인 메시지 */}
+          <div className="text-center pt-4 border-t-2 border-green-200">
+            <p className="text-lg font-bold text-green-700">
+              ✅ 회원가입이 성공적으로 완료되었습니다!
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              계정 정보는 안전하게 저장되었습니다
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -473,25 +502,50 @@ export function SignUpForm() {
 
           {/* 인증 완료 표시 */}
           {phoneVerified && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-lg p-5 shadow-sm">
-              <div className="flex items-center gap-3 mb-2">
-                <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-                <p className="text-base font-bold text-green-800">✅ 전화번호 인증 완료!</p>
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-500 rounded-xl p-6 shadow-lg animate-pulse">
+              <div className="flex items-center gap-3 mb-3">
+                <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-xl font-bold text-green-900">✅ 전화번호 인증 완료!</p>
+                  <p className="text-sm text-green-700 mt-1">⏰ 인증은 10분간 유효합니다</p>
+                </div>
               </div>
-              <p className="text-sm text-green-700 ml-9">이제 아래 '회원가입' 버튼을 클릭하세요</p>
+              <div className="bg-white rounded-lg p-4 mt-3 border-2 border-green-300">
+                <p className="text-base font-semibold text-green-800 flex items-center gap-2">
+                  <span className="text-2xl">👇</span>
+                  <span>이제 아래 <span className="text-green-600 underline">'회원가입 완료하기'</span> 버튼을 클릭하세요!</span>
+                </p>
+              </div>
             </div>
           )}
 
           {/* 제출 버튼 */}
           <Button
             type="submit"
-            className="w-full h-14 text-lg font-bold mt-6 shadow-lg"
+            className={`w-full h-16 text-xl font-bold mt-6 shadow-xl transition-all duration-300 ${
+              phoneVerified 
+                ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 animate-bounce" 
+                : "bg-gray-400"
+            }`}
             disabled={isLoading || !phoneVerified}
             size="lg"
           >
             {isLoading && <Loader2 className="mr-2 h-6 w-6 animate-spin" />}
-            {isLoading ? "처리 중..." : !phoneVerified ? "⚠️ 전화번호 인증 필요" : "🎉 회원가입 완료하기"}
+            {isLoading ? "🔄 처리 중..." : !phoneVerified ? "⚠️ 전화번호 인증 필요" : "🎉 회원가입 완료하기"}
           </Button>
+          
+          {/* 진행 안내 */}
+          {!phoneVerified && (
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mt-4">
+              <p className="text-sm font-semibold text-blue-900 mb-2">📋 회원가입 진행 단계:</p>
+              <ol className="text-sm text-blue-800 space-y-1 ml-4">
+                <li>1️⃣ 모든 필드를 입력하세요</li>
+                <li>2️⃣ 전화번호를 입력하고 <strong>'인증번호'</strong> 버튼 클릭</li>
+                <li>3️⃣ 받은 인증번호를 입력하고 <strong>'확인'</strong> 버튼 클릭</li>
+                <li>4️⃣ <strong className="text-blue-600">'회원가입 완료하기'</strong> 버튼 클릭</li>
+              </ol>
+            </div>
+          )}
 
           <div className="text-center text-sm text-gray-600 mt-6 pt-4 border-t">
             이미 계정이 있으신가요?{" "}
