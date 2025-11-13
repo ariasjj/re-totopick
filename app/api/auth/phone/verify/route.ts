@@ -7,6 +7,7 @@ import { z } from "zod"
 const verifySchema = z.object({
   phone: z.string().regex(/^010\d{8}$/, "올바른 전화번호 형식이 아닙니다."),
   code: z.string().length(6, "인증번호는 6자리입니다."),
+  testMode: z.boolean().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -22,9 +23,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { phone, code } = validation.data
+    const { phone, code, testMode } = validation.data
 
-    // 최근 인증번호 조회
+    // 테스트 모드인 경우 바로 인증 기록 생성
+    if (testMode) {
+      // 기존 미인증 기록 삭제
+      await prisma.phoneVerification.deleteMany({
+        where: {
+          phone,
+          verified: false,
+        },
+      })
+
+      // 새로운 인증 기록 생성
+      await prisma.phoneVerification.create({
+        data: {
+          phone,
+          code,
+          verified: true,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5분 후
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: "전화번호 인증이 완료되었습니다. (테스트 모드)",
+      })
+    }
+
+    // 일반 모드: 최근 인증번호 조회
     const verification = await prisma.phoneVerification.findFirst({
       where: {
         phone,

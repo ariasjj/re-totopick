@@ -115,22 +115,19 @@ export function SignUpForm() {
       return
     }
 
-    // 테스트 모드에서는 아무 인증번호나 통과
-    if (testMode) {
-      setCodeVerified(true)
-      setError("")
-      alert("전화번호 인증이 완료되었습니다! (테스트 모드)")
-      return
-    }
-
     try {
       setIsLoading(true)
       setError("")
 
+      // 테스트 모드에서도 API를 호출하여 DB에 인증 기록 저장
       const res = await fetch("/api/auth/phone/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code }),
+        body: JSON.stringify({ 
+          phone, 
+          code,
+          testMode: testMode // 테스트 모드 플래그 전달
+        }),
       })
 
       const data = await res.json()
@@ -141,7 +138,9 @@ export function SignUpForm() {
       }
 
       setCodeVerified(true)
-      alert("전화번호 인증이 완료되었습니다!")
+      alert(testMode 
+        ? "전화번호 인증이 완료되었습니다! (테스트 모드)" 
+        : "전화번호 인증이 완료되었습니다!")
     } catch (error) {
       console.error("인증번호 확인 에러:", error)
       setError("인증번호 확인 중 오류가 발생했습니다.")
@@ -179,8 +178,8 @@ export function SignUpForm() {
         return
       }
 
-      // 회원가입 성공
-      alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.")
+      // 회원가입 성공 - 축하 메시지
+      alert(`🎉 회원가입을 축하합니다!\n\n가입 축하 포인트 1,000P가 지급되었습니다.\n로그인 후 다양한 서비스를 이용하실 수 있습니다.`)
       router.push("/auth/signin")
     } catch (error) {
       console.error("회원가입 에러:", error)
