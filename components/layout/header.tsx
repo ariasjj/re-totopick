@@ -33,18 +33,36 @@ export function Header() {
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar>
-                    <AvatarFallback>
+                <Button 
+                  variant="ghost" 
+                  className="relative h-auto px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9 border-2 border-primary/20">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm">
+                        {session.user?.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-semibold text-foreground">
+                        {session.user?.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        내 정보
+                      </span>
+                    </div>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center justify-start gap-2 p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-t-lg">
+                  <Avatar className="h-10 w-10 border-2 border-primary/30">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                       {session.user?.name?.charAt(0) || "U"}
                     </AvatarFallback>
                   </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-sm font-bold text-foreground">{session.user?.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {session.user?.email}
                     </p>
@@ -67,7 +85,7 @@ export function Header() {
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="cursor-pointer"
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                   onClick={() => signOut()}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
