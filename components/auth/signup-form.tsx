@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,36 +14,26 @@ export function SignUpForm() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   
-  // 폼 데이터
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    passwordConfirm: "",
-    nickname: "",
-    phone: "",
-    verificationCode: ""
-  })
+  // Uncontrolled Inputs - 브라우저 자동화 호환
+  const usernameRef = useRef<HTMLInputElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const passwordConfirmRef = useRef<HTMLInputElement>(null)
+  const nicknameRef = useRef<HTMLInputElement>(null)
+  const phoneRef = useRef<HTMLInputElement>(null)
+  const verificationCodeRef = useRef<HTMLInputElement>(null)
   
   // 인증 상태
   const [codeSent, setCodeSent] = useState(false)
   const [codeVerified, setCodeVerified] = useState(false)
   const [testCode, setTestCode] = useState("")
 
-  // 입력값 변경
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
-    setError("")
-  }
-
   // 인증번호 발송
   const sendCode = async () => {
-    console.log("🔵 [sendCode] 시작, 전화번호:", formData.phone)
+    const phone = phoneRef.current?.value || ""
+    console.log("🔵 [sendCode] 시작, 전화번호:", phone)
     
-    if (!/^010\d{8}$/.test(formData.phone)) {
+    if (!/^010\d{8}$/.test(phone)) {
       const msg = "010으로 시작하는 11자리 숫자를 입력하세요"
       console.log("❌ [sendCode] 전화번호 형식 오류")
       setError(msg)
@@ -59,7 +49,7 @@ export function SignUpForm() {
       const res = await fetch("/api/auth/phone/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone }),
+        body: JSON.stringify({ phone }),
       })
 
       const data = await res.json()
@@ -91,8 +81,12 @@ export function SignUpForm() {
 
   // 인증번호 확인
   const verifyCode = async () => {
-    if (formData.verificationCode.length !== 6) {
+    const verificationCode = verificationCodeRef.current?.value || ""
+    const phone = phoneRef.current?.value || ""
+    
+    if (verificationCode.length !== 6) {
       setError("6자리 인증번호를 입력하세요")
+      alert("6자리 인증번호를 입력하세요")
       return
     }
 
@@ -104,22 +98,26 @@ export function SignUpForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          phone: formData.phone, 
-          code: formData.verificationCode,
+          phone, 
+          code: verificationCode,
           testMode: true
         }),
       })
 
       if (res.ok) {
         setCodeVerified(true)
-        alert("인증이 완료되었습니다!")
+        alert("✅ 인증이 완료되었습니다!")
       } else {
         const data = await res.json()
-        setError(data.error || "인증에 실패했습니다")
+        const msg = data.error || "인증에 실패했습니다"
+        setError(msg)
+        alert(`❌ ${msg}`)
       }
     } catch (err) {
       console.error(err)
-      setError("인증 중 오류가 발생했습니다")
+      const msg = "인증 중 오류가 발생했습니다"
+      setError(msg)
+      alert(`❌ ${msg}`)
     } finally {
       setIsLoading(false)
     }
@@ -129,12 +127,20 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // ref에서 값 읽기
+    const username = usernameRef.current?.value || ""
+    const email = emailRef.current?.value || ""
+    const password = passwordRef.current?.value || ""
+    const passwordConfirm = passwordConfirmRef.current?.value || ""
+    const nickname = nicknameRef.current?.value || ""
+    const phone = phoneRef.current?.value || ""
+    
     console.log("================================")
     console.log("🔵 회원가입 시작")
     console.log("================================")
     
     // 유효성 검사
-    if (!formData.username || formData.username.length < 4) {
+    if (!username || username.length < 4) {
       const msg = "아이디는 4자 이상이어야 합니다"
       setError(msg)
       alert(msg)
@@ -142,7 +148,7 @@ export function SignUpForm() {
       return
     }
     
-    if (!formData.email || !formData.email.includes("@")) {
+    if (!email || !email.includes("@")) {
       const msg = "올바른 이메일을 입력하세요"
       setError(msg)
       alert(msg)
@@ -150,7 +156,7 @@ export function SignUpForm() {
       return
     }
     
-    if (!formData.password || formData.password.length < 6) {
+    if (!password || password.length < 6) {
       const msg = "비밀번호는 6자 이상이어야 합니다"
       setError(msg)
       alert(msg)
@@ -158,7 +164,7 @@ export function SignUpForm() {
       return
     }
     
-    if (formData.password !== formData.passwordConfirm) {
+    if (password !== passwordConfirm) {
       const msg = "비밀번호가 일치하지 않습니다"
       setError(msg)
       alert(msg)
@@ -166,7 +172,7 @@ export function SignUpForm() {
       return
     }
     
-    if (!formData.nickname || formData.nickname.length < 2) {
+    if (!nickname || nickname.length < 2) {
       const msg = "닉네임은 2자 이상이어야 합니다"
       setError(msg)
       alert(msg)
@@ -190,11 +196,11 @@ export function SignUpForm() {
       
       console.log("🔵 API 호출 준비...")
       console.log("📤 전송할 데이터:", {
-        username: formData.username,
-        email: formData.email,
+        username,
+        email,
         password: "***",
-        nickname: formData.nickname,
-        phone: formData.phone,
+        nickname,
+        phone,
         codeVerified
       })
       
@@ -202,11 +208,11 @@ export function SignUpForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          nickname: formData.nickname,
-          phone: formData.phone,
+          username,
+          email,
+          password,
+          nickname,
+          phone,
         }),
       })
       
@@ -285,9 +291,8 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">아이디</label>
             <Input
+              ref={usernameRef}
               name="username"
-              value={formData.username}
-              onChange={handleChange}
               placeholder="영문, 숫자, _ 만 입력 가능 (4-20자)"
               disabled={isLoading}
             />
@@ -298,10 +303,9 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">이메일</label>
             <Input
+              ref={emailRef}
               name="email"
               type="email"
-              value={formData.email}
-              onChange={handleChange}
               placeholder="example@email.com"
               disabled={isLoading}
             />
@@ -311,10 +315,9 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">비밀번호</label>
             <Input
+              ref={passwordRef}
               name="password"
               type="password"
-              value={formData.password}
-              onChange={handleChange}
               placeholder="최소 6자 이상"
               disabled={isLoading}
             />
@@ -324,10 +327,9 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">비밀번호 확인</label>
             <Input
+              ref={passwordConfirmRef}
               name="passwordConfirm"
               type="password"
-              value={formData.passwordConfirm}
-              onChange={handleChange}
               placeholder="비밀번호 재입력"
               disabled={isLoading}
             />
@@ -337,9 +339,8 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">닉네임</label>
             <Input
+              ref={nicknameRef}
               name="nickname"
-              value={formData.nickname}
-              onChange={handleChange}
               placeholder="닉네임 입력"
               disabled={isLoading}
             />
@@ -350,9 +351,8 @@ export function SignUpForm() {
             <label className="text-sm font-medium">전화번호</label>
             <div className="flex gap-2">
               <Input
+                ref={phoneRef}
                 name="phone"
-                value={formData.phone}
-                onChange={handleChange}
                 placeholder="01012345678"
                 disabled={isLoading || codeSent}
               />
@@ -380,9 +380,8 @@ export function SignUpForm() {
               <label className="text-sm font-medium">인증번호</label>
               <div className="flex gap-2">
                 <Input
+                  ref={verificationCodeRef}
                   name="verificationCode"
-                  value={formData.verificationCode}
-                  onChange={handleChange}
                   placeholder="6자리 숫자"
                   maxLength={6}
                   disabled={isLoading}
