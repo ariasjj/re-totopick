@@ -151,52 +151,85 @@ export function SignUpForm() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("🔵 onSubmit 시작:", values)
+    console.log("=".repeat(50))
+    console.log("🔵 [회원가입] 시작")
+    console.log("🔵 [회원가입] 폼 데이터:", { 
+      username: values.username,
+      email: values.email,
+      nickname: values.nickname,
+      phone: values.phone 
+    })
     
+    // 1단계: 인증 확인
     if (!codeVerified) {
-      console.log("❌ 전화번호 인증 미완료")
-      setError("전화번호 인증을 완료해주세요.")
+      console.error("❌ [회원가입] 실패: 인증 미완료")
+      setError("전화번호 인증을 먼저 완료해주세요.")
       return
     }
+    console.log("✅ [1/5] 인증 상태 확인 완료")
 
     try {
       setIsLoading(true)
       setError("")
 
-      console.log("🔵 회원가입 API 호출 시작...")
+      // 2단계: API 호출 준비
+      const requestData = {
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        nickname: values.nickname,
+        phone: values.phone,
+      }
+      console.log("✅ [2/5] 요청 데이터 준비 완료")
+
+      // 3단계: API 호출
+      console.log("🔵 [3/5] API 호출 중...")
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: values.username,
-          email: values.email,
-          password: values.password,
-          nickname: values.nickname,
-          phone: values.phone,
-        }),
+        body: JSON.stringify(requestData),
       })
+      console.log("✅ [3/5] API 응답 수신:", res.status, res.statusText)
 
-      console.log("🔵 API 응답 상태:", res.status, res.statusText)
-      const data = await res.json()
-      console.log("🔵 API 응답 데이터:", data)
+      // 4단계: 응답 처리
+      let data
+      try {
+        data = await res.json()
+        console.log("🔵 [4/5] 응답 데이터:", data)
+      } catch (jsonError) {
+        console.error("❌ JSON 파싱 실패:", jsonError)
+        throw new Error("서버 응답을 읽을 수 없습니다.")
+      }
 
       if (!res.ok) {
-        console.log("❌ 회원가입 실패:", data.error)
-        setError(data.error || "회원가입에 실패했습니다.")
-        alert(`❌ 회원가입 실패:\n\n${data.error || "회원가입에 실패했습니다."}`)
+        const errorMsg = data.error || `회원가입 실패 (HTTP ${res.status})`
+        console.error("❌ [4/5] API 에러:", errorMsg)
+        setError(errorMsg)
         return
       }
 
-      // 회원가입 성공
-      console.log("✅ 회원가입 성공!")
+      // 5단계: 성공 처리
+      console.log("✅ [5/5] 회원가입 성공!")
+      console.log("=".repeat(50))
       setSignupSuccess(true)
+      
     } catch (error) {
-      console.error("❌ 회원가입 에러:", error)
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류"
-      setError(`회원가입 중 오류가 발생했습니다. (${errorMessage})`)
-      alert(`❌ 회원가입 중 오류:\n\n${errorMessage}`)
+      console.error("❌ [회원가입] 예외 발생:", error)
+      
+      let errorMsg = "회원가입 중 오류가 발생했습니다."
+      if (error instanceof Error) {
+        errorMsg = error.message
+        console.error("❌ 에러 상세:", {
+          message: error.message,
+          name: error.name,
+          stack: error.stack?.split('\n').slice(0, 3).join('\n')
+        })
+      }
+      
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
+      console.log("🔵 [회원가입] 프로세스 종료")
     }
   }
 
@@ -434,13 +467,19 @@ export function SignUpForm() {
               />
             )}
 
+            {!codeVerified && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm p-3 rounded-md">
+                ℹ️ 전화번호 인증을 완료해주세요
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full"
               disabled={isLoading || !codeVerified}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              회원가입
+              {!codeVerified ? "인증 후 가입 가능" : "회원가입"}
             </Button>
 
             <div className="text-center text-sm">
