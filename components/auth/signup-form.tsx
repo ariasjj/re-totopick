@@ -110,8 +110,12 @@ export function SignUpForm() {
 
   // 인증번호 확인
   const handleVerifyCode = async () => {
+    console.log("📱 인증번호 확인 시작:", verificationCode)
+    
     if (!verificationCode || verificationCode.length !== 6) {
-      alert("❌ 6자리 인증번호를 입력해주세요")
+      const msg = "6자리 인증번호를 입력해주세요"
+      console.log("❌ 검증 실패:", msg)
+      alert(`❌ ${msg}`)
       return
     }
 
@@ -119,22 +123,28 @@ export function SignUpForm() {
     setError("")
 
     try {
+      console.log("🔵 인증 API 호출 중...")
+      
       const res = await fetch("/api/auth/phone/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, code: verificationCode, testMode: true }),
       })
 
+      console.log("📥 인증 API 응답:", res.status)
+
       if (res.ok) {
+        console.log("✅ 전화번호 인증 완료!")
         setPhoneVerified(true)
-        alert("✅ 인증 완료!")
+        alert("✅ 전화번호 인증이 완료되었습니다!\n\n이제 '회원가입' 버튼을 클릭하세요.")
       } else {
         const data = await res.json()
-        alert(`❌ ${data.error || "인증 실패"}`)
+        console.log("❌ 인증 실패:", data)
+        alert(`❌ ${data.error || "인증 실패"}\n\n다시 시도해주세요.`)
       }
     } catch (error) {
-      console.error(error)
-      alert("❌ 인증 중 오류 발생")
+      console.error("❌ 인증 에러:", error)
+      alert("❌ 인증 중 오류 발생\n\n다시 시도해주세요.")
     } finally {
       setIsLoading(false)
     }
@@ -144,43 +154,69 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log("========================================")
+    console.log("🎯 회원가입 프로세스 시작")
+    console.log("========================================")
+    console.log("입력값 확인:")
+    console.log("- 아이디:", username, `(${username.length}자)`)
+    console.log("- 이메일:", email)
+    console.log("- 비밀번호 길이:", password.length)
+    console.log("- 닉네임:", nickname)
+    console.log("- 전화번호:", phone)
+    console.log("- 전화번호 인증 완료:", phoneVerified)
+    
     // 검증
     if (!username || username.length < 4) {
-      setError("아이디는 4자 이상이어야 합니다")
-      alert("❌ 아이디는 4자 이상이어야 합니다")
+      const msg = "아이디는 4자 이상이어야 합니다"
+      console.log("❌ 검증 실패:", msg)
+      setError(msg)
+      alert(`❌ ${msg}`)
       return
     }
     if (!email || !email.includes("@")) {
-      setError("올바른 이메일을 입력해주세요")
-      alert("❌ 올바른 이메일을 입력해주세요")
+      const msg = "올바른 이메일을 입력해주세요"
+      console.log("❌ 검증 실패:", msg)
+      setError(msg)
+      alert(`❌ ${msg}`)
       return
     }
     if (!password || password.length < 6) {
-      setError("비밀번호는 6자 이상이어야 합니다")
-      alert("❌ 비밀번호는 6자 이상이어야 합니다")
+      const msg = "비밀번호는 6자 이상이어야 합니다"
+      console.log("❌ 검증 실패:", msg)
+      setError(msg)
+      alert(`❌ ${msg}`)
       return
     }
     if (password !== passwordConfirm) {
-      setError("비밀번호가 일치하지 않습니다")
-      alert("❌ 비밀번호가 일치하지 않습니다")
+      const msg = "비밀번호가 일치하지 않습니다"
+      console.log("❌ 검증 실패:", msg)
+      setError(msg)
+      alert(`❌ ${msg}`)
       return
     }
     if (!nickname || nickname.length < 2) {
-      setError("닉네임은 2자 이상이어야 합니다")
-      alert("❌ 닉네임은 2자 이상이어야 합니다")
+      const msg = "닉네임은 2자 이상이어야 합니다"
+      console.log("❌ 검증 실패:", msg)
+      setError(msg)
+      alert(`❌ ${msg}`)
       return
     }
     if (!phoneVerified) {
+      const msg = "⚠️ 전화번호 인증을 먼저 완료해주세요!\n\n1. 전화번호를 입력하세요\n2. '인증번호' 버튼을 클릭하세요\n3. 받은 인증번호를 입력하세요\n4. '확인' 버튼을 클릭하세요"
+      console.log("❌ 검증 실패: 전화번호 미인증")
       setError("전화번호 인증을 완료해주세요")
-      alert("❌ 전화번호 인증을 완료해주세요")
+      alert(msg)
       return
     }
 
+    console.log("✅ 모든 검증 통과")
+    
     setIsLoading(true)
     setError("")
 
     try {
-      console.log("🔵 회원가입 API 호출")
+      console.log("🔵 회원가입 API 호출 시작")
+      console.log("📤 전송 데이터:", { username, email, nickname, phone })
       
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -188,16 +224,20 @@ export function SignUpForm() {
         body: JSON.stringify({ username, email, password, nickname, phone }),
       })
 
-      console.log("📥 응답:", res.status)
+      console.log("📥 API 응답 상태:", res.status, res.statusText)
       
       const data = await res.json()
-      console.log("📥 데이터:", data)
+      console.log("📥 API 응답 데이터:", data)
 
       if (!res.ok) {
+        console.log("❌ API 호출 실패")
         throw new Error(data.error || "회원가입 실패")
       }
 
-      console.log("✅ 회원가입 성공!")
+      console.log("========================================")
+      console.log("🎉 회원가입 성공!")
+      console.log("========================================")
+      console.log("생성된 사용자:", data.user)
       
       // 성공 메시지 표시
       alert("🎉 회원가입이 완료되었습니다!\n\n✅ 가입 축하 1,000P가 지급되었습니다!\n\n이제 로그인하실 수 있습니다.")
@@ -205,10 +245,13 @@ export function SignUpForm() {
       setSuccess(true)
       
     } catch (error: any) {
-      console.error("❌ 에러:", error)
+      console.log("========================================")
+      console.error("❌ 회원가입 실패")
+      console.error("에러:", error)
+      console.log("========================================")
       const msg = error.message || "회원가입 중 오류 발생"
       setError(msg)
-      alert(`❌ 회원가입 실패\n\n${msg}`)
+      alert(`❌ 회원가입 실패\n\n${msg}\n\n개발자 도구(F12)의 Console 탭에서 상세 정보를 확인하세요.`)
     } finally {
       setIsLoading(false)
     }
@@ -428,21 +471,24 @@ export function SignUpForm() {
 
           {/* 인증 완료 표시 */}
           {phoneVerified && (
-            <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <p className="text-sm font-semibold text-green-800">전화번호 인증 완료</p>
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                <p className="text-base font-bold text-green-800">✅ 전화번호 인증 완료!</p>
+              </div>
+              <p className="text-sm text-green-700 ml-9">이제 아래 '회원가입' 버튼을 클릭하세요</p>
             </div>
           )}
 
           {/* 제출 버튼 */}
           <Button
             type="submit"
-            className="w-full h-12 text-base font-semibold mt-6"
+            className="w-full h-14 text-lg font-bold mt-6 shadow-lg"
             disabled={isLoading || !phoneVerified}
             size="lg"
           >
-            {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-            {!phoneVerified ? "전화번호 인증 필요" : "회원가입"}
+            {isLoading && <Loader2 className="mr-2 h-6 w-6 animate-spin" />}
+            {isLoading ? "처리 중..." : !phoneVerified ? "⚠️ 전화번호 인증 필요" : "🎉 회원가입 완료하기"}
           </Button>
 
           <div className="text-center text-sm text-gray-600 mt-6 pt-4 border-t">
