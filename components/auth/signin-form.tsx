@@ -1,8 +1,6 @@
 "use client"
 
-// 로그인 폼 컴포넌트
-
-import { useState, useRef } from "react" // useRef 추가
+import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,85 +12,92 @@ import { Loader2 } from "lucide-react"
 export function SignInForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string>("")
+  const [error, setError] = useState("")
+  
+  // Controlled Inputs - 명확한 상태 관리
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  })
 
-  // Uncontrolled Inputs - 브라우저 자동화 호환
-  const emailRef = useRef<HTMLInputElement>(null)
-  const passwordRef = useRef<HTMLInputElement>(null)
+  // 입력값 변경 핸들러
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    console.log(`🔵 [handleChange] ${name}:`, value.substring(0, 20))
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    setError("")
+  }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // ref에서 값 읽기
-    const email = emailRef.current?.value || ""
-    const password = passwordRef.current?.value || ""
+    const { email, password } = formData
     
     console.log("================================")
-    console.log("🔵 로그인 시작")
+    console.log("🔵 [handleSubmit] 로그인 시작")
     console.log("================================")
+    console.log("📝 입력 데이터:", {
+      email,
+      password: password ? "***" : "(비어있음)"
+    })
     
     // 유효성 검사
-    if (!email || email.length < 1) {
+    if (!email || email.trim().length === 0) {
       const msg = "이메일 또는 아이디를 입력하세요"
+      console.log("❌ 유효성 검사 실패:", msg)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
-    
+
     if (!password || password.length < 6) {
       const msg = "비밀번호는 최소 6자 이상이어야 합니다"
+      console.log("❌ 유효성 검사 실패:", msg, "현재 길이:", password.length)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
-    
-    console.log("✅ 유효성 검사 통과")
-    
+
+    console.log("✅ 모든 유효성 검사 통과")
+
     try {
       setIsLoading(true)
       setError("")
-
-      console.log("🔵 NextAuth 로그인 시도...")
-      console.log("📤 전송할 데이터:", {
-        email,
-        password: "***" // 보안을 위해 마스킹
-      })
-
-      // NextAuth 로그인 시도
+      
+      console.log("🔵 NextAuth signIn 호출 중...")
+      
       const result = await signIn("credentials", {
-        email,
+        email: email.trim(),
         password,
         redirect: false,
-        callbackUrl: "/",
       })
 
-      console.log("📥 로그인 결과:", result)
+      console.log("📥 NextAuth 응답:", result)
 
-      // 에러 처리
       if (result?.error) {
-        const errorMsg = "이메일/아이디 또는 비밀번호가 올바르지 않습니다"
-        console.log("❌ 로그인 실패:", errorMsg)
-        setError(errorMsg)
-        alert(`로그인 실패!\n\n${errorMsg}`)
+        console.log("❌ 로그인 실패:", result.error)
         console.log("================================")
+        const errorMsg = "이메일/아이디 또는 비밀번호가 올바르지 않습니다."
+        setError(errorMsg)
+        alert(`❌ ${errorMsg}`)
         return
       }
 
-      // 로그인 성공
-      if (result?.ok) {
-        console.log("✅ 로그인 성공!")
-        alert("✅ 로그인 성공!")
-        console.log("================================")
-        router.push("/")
-        router.refresh()
-      }
-    } catch (error) {
-      console.error("❌ 로그인 중 에러 발생:", error)
-      const msg = "로그인 중 오류가 발생했습니다"
+      console.log("✅ 로그인 성공!")
+      console.log("================================")
+      
+      alert("✅ 로그인 성공!")
+      router.push("/")
+      router.refresh()
+    } catch (err) {
+      console.error("❌ 로그인 중 에러 발생:", err)
+      const msg = "로그인 중 오류가 발생했습니다."
+      console.log("================================")
       setError(msg)
-      alert(`로그인 오류!\n\n${msg}`)
+      alert(`❌ ${msg}`)
     } finally {
       setIsLoading(false)
     }
@@ -102,57 +107,58 @@ export function SignInForm() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>로그인</CardTitle>
-        <CardDescription>
-          토토픽 계정으로 로그인하세요
-        </CardDescription>
+        <CardDescription>토토픽 계정으로 로그인하세요</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-              {error}
+            <div className="bg-red-50 border border-red-200 p-3 rounded">
+              <p className="text-red-500 text-sm text-center">{error}</p>
             </div>
           )}
 
-          {/* 이메일 또는 아이디 */}
           <div>
             <label className="text-sm font-medium">이메일 또는 아이디</label>
             <Input
-              ref={emailRef} // ref 연결
               name="email"
               type="text"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="이메일 또는 아이디를 입력하세요"
               disabled={isLoading}
+              autoComplete="username"
             />
           </div>
 
-          {/* 비밀번호 */}
           <div>
             <label className="text-sm font-medium">비밀번호</label>
             <Input
-              ref={passwordRef} // ref 연결
               name="password"
               type="password"
-              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="비밀번호를 입력하세요"
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+          >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             로그인
           </Button>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">계정이 없으신가요? </span>
-            <Link href="/auth/signup" className="text-primary hover:underline">
-              회원가입
-            </Link>
-          </div>
         </form>
+        <div className="text-center text-sm text-gray-500 mt-4">
+          계정이 없으신가요?{" "}
+          <Link href="/auth/signup" className="text-primary hover:underline">
+            회원가입
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )
 }
-
-

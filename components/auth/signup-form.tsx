@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,29 +8,53 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
 
+// 폼 데이터 타입 정의
+interface FormData {
+  username: string
+  email: string
+  password: string
+  passwordConfirm: string
+  nickname: string
+  phone: string
+  verificationCode: string
+}
+
 export function SignUpForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   
-  // Uncontrolled Inputs - 브라우저 자동화 호환
-  const usernameRef = useRef<HTMLInputElement>(null)
-  const emailRef = useRef<HTMLInputElement>(null)
-  const passwordRef = useRef<HTMLInputElement>(null)
-  const passwordConfirmRef = useRef<HTMLInputElement>(null)
-  const nicknameRef = useRef<HTMLInputElement>(null)
-  const phoneRef = useRef<HTMLInputElement>(null)
-  const verificationCodeRef = useRef<HTMLInputElement>(null)
+  // Controlled Inputs - 명확한 상태 관리
+  const [formData, setFormData] = useState<FormData>({
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
+    nickname: "",
+    phone: "",
+    verificationCode: ""
+  })
   
   // 인증 상태
   const [codeSent, setCodeSent] = useState(false)
   const [codeVerified, setCodeVerified] = useState(false)
   const [testCode, setTestCode] = useState("")
 
+  // 입력값 변경 핸들러
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    console.log(`🔵 [handleChange] ${name}:`, value.substring(0, 20))
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    setError("")
+  }
+
   // 인증번호 발송
   const sendCode = async () => {
-    const phone = phoneRef.current?.value || ""
+    const phone = formData.phone.trim()
     console.log("🔵 [sendCode] 시작, 전화번호:", phone)
     
     if (!/^010\d{8}$/.test(phone)) {
@@ -52,8 +76,9 @@ export function SignUpForm() {
         body: JSON.stringify({ phone }),
       })
 
+      console.log("🔵 [sendCode] API 응답 상태:", res.status)
       const data = await res.json()
-      console.log("🔵 [sendCode] API 응답:", data)
+      console.log("🔵 [sendCode] API 응답 데이터:", data)
       
       if (data.code) {
         setTestCode(data.code)
@@ -81,18 +106,20 @@ export function SignUpForm() {
 
   // 인증번호 확인
   const verifyCode = async () => {
-    const verificationCode = verificationCodeRef.current?.value || ""
-    const phone = phoneRef.current?.value || ""
+    const { verificationCode, phone } = formData
+    console.log("🔵 [verifyCode] 시작, 코드:", verificationCode)
     
     if (verificationCode.length !== 6) {
-      setError("6자리 인증번호를 입력하세요")
-      alert("6자리 인증번호를 입력하세요")
+      const msg = "6자리 인증번호를 입력하세요"
+      setError(msg)
+      alert(msg)
       return
     }
 
     try {
       setIsLoading(true)
       setError("")
+      console.log("🔵 [verifyCode] API 호출 중...")
 
       const res = await fetch("/api/auth/phone/verify", {
         method: "POST",
@@ -104,22 +131,27 @@ export function SignUpForm() {
         }),
       })
 
+      console.log("🔵 [verifyCode] API 응답 상태:", res.status)
+      
       if (res.ok) {
         setCodeVerified(true)
+        console.log("✅ [verifyCode] 인증 성공")
         alert("✅ 인증이 완료되었습니다!")
       } else {
         const data = await res.json()
         const msg = data.error || "인증에 실패했습니다"
+        console.log("❌ [verifyCode] 인증 실패:", msg)
         setError(msg)
         alert(`❌ ${msg}`)
       }
     } catch (err) {
-      console.error(err)
+      console.error("❌ [verifyCode] 에러:", err)
       const msg = "인증 중 오류가 발생했습니다"
       setError(msg)
       alert(`❌ ${msg}`)
     } finally {
       setIsLoading(false)
+      console.log("🔵 [verifyCode] 종료")
     }
   }
 
@@ -127,93 +159,95 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // ref에서 값 읽기
-    const username = usernameRef.current?.value || ""
-    const email = emailRef.current?.value || ""
-    const password = passwordRef.current?.value || ""
-    const passwordConfirm = passwordConfirmRef.current?.value || ""
-    const nickname = nicknameRef.current?.value || ""
-    const phone = phoneRef.current?.value || ""
+    const { username, email, password, passwordConfirm, nickname, phone } = formData
     
     console.log("================================")
-    console.log("🔵 회원가입 시작")
+    console.log("🔵 [handleSubmit] 회원가입 시작")
     console.log("================================")
+    console.log("📝 입력 데이터:", {
+      username,
+      email,
+      nickname,
+      phone,
+      password: password ? "***" : "(비어있음)",
+      passwordConfirm: passwordConfirm ? "***" : "(비어있음)",
+      codeVerified
+    })
     
     // 유효성 검사
-    if (!username || username.length < 4) {
+    if (!username || username.trim().length < 4) {
       const msg = "아이디는 4자 이상이어야 합니다"
+      console.log("❌ 유효성 검사 실패:", msg)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!email || !email.includes("@")) {
       const msg = "올바른 이메일을 입력하세요"
+      console.log("❌ 유효성 검사 실패:", msg)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!password || password.length < 6) {
       const msg = "비밀번호는 6자 이상이어야 합니다"
+      console.log("❌ 유효성 검사 실패:", msg, "현재 길이:", password.length)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (password !== passwordConfirm) {
       const msg = "비밀번호가 일치하지 않습니다"
+      console.log("❌ 유효성 검사 실패:", msg)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
-    if (!nickname || nickname.length < 2) {
+    if (!nickname || nickname.trim().length < 2) {
       const msg = "닉네임은 2자 이상이어야 합니다"
+      console.log("❌ 유효성 검사 실패:", msg)
       setError(msg)
       alert(msg)
-      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!codeVerified) {
       const msg = "전화번호 인증을 먼저 완료하세요"
+      console.log("❌ 인증 검사 실패:", msg)
       setError(msg)
       alert(msg)
-      console.log("❌ 인증 검사 실패:", msg)
       return
     }
     
-    console.log("✅ 유효성 검사 통과")
+    console.log("✅ 모든 유효성 검사 통과")
     
     try {
       setIsLoading(true)
       setError("")
       
-      console.log("🔵 API 호출 준비...")
-      console.log("📤 전송할 데이터:", {
-        username,
-        email,
-        password: "***",
-        nickname,
-        phone,
-        codeVerified
+      console.log("🔵 API 호출 시작...")
+      
+      const requestBody = {
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        nickname: nickname.trim(),
+        phone: phone.trim(),
+      }
+      
+      console.log("📤 API 요청 데이터:", {
+        ...requestBody,
+        password: "***"
       })
       
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          nickname,
-          phone,
-        }),
+        body: JSON.stringify(requestBody),
       })
       
       console.log("📥 API 응답 상태:", response.status, response.statusText)
@@ -226,35 +260,27 @@ export function SignUpForm() {
         const errorMsg = result.error || "회원가입에 실패했습니다"
         console.log("❌ API 실패:", errorMsg)
         console.log("================================")
-        alert(`회원가입 실패!\n\n${errorMsg}`)
-        throw new Error(errorMsg)
+        setError(errorMsg)
+        alert(`❌ 회원가입 실패!\n\n${errorMsg}`)
+        return
       }
       
       console.log("✅ 회원가입 API 성공!")
-      console.log("✅ 사용자 정보:", result.user)
       console.log("================================")
-      
-      alert("🎉 회원가입 완료!\n\n1,000P가 지급되었습니다.")
       setSuccess(true)
+      alert("🎉 회원가입 완료! 가입 축하 1,000P가 지급되었습니다.")
       
-    } catch (err: any) {
-      console.error("❌ 회원가입 에러:", err)
-      console.log("❌ 에러 메시지:", err.message)
-      console.log("❌ 전체 에러:", err)
+    } catch (err) {
+      console.error("❌ 회원가입 중 에러 발생:", err)
+      const msg = (err as Error).message || "회원가입 중 오류가 발생했습니다"
       console.log("================================")
-      
-      const errorMsg = err.message || "회원가입 중 오류가 발생했습니다"
-      setError(errorMsg)
-      
-      if (!alert) {
-        alert(`회원가입 오류!\n\n${errorMsg}`)
-      }
+      setError(msg)
+      alert(`❌ 회원가입 오류!\n\n${msg}`)
     } finally {
       setIsLoading(false)
     }
   }
 
-  // 성공 화면
   if (success) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -287,14 +313,22 @@ export function SignUpForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded">
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            </div>
+          )}
+
           {/* 아이디 */}
           <div>
             <label className="text-sm font-medium">아이디</label>
             <Input
-              ref={usernameRef}
               name="username"
+              value={formData.username}
+              onChange={handleChange}
               placeholder="영문, 숫자, _ 만 입력 가능 (4-20자)"
               disabled={isLoading}
+              autoComplete="username"
             />
             <p className="text-xs text-gray-500 mt-1">로그인 시 사용할 아이디입니다</p>
           </div>
@@ -303,11 +337,13 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">이메일</label>
             <Input
-              ref={emailRef}
               name="email"
               type="email"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="example@email.com"
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
 
@@ -315,11 +351,13 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">비밀번호</label>
             <Input
-              ref={passwordRef}
               name="password"
               type="password"
+              value={formData.password}
+              onChange={handleChange}
               placeholder="최소 6자 이상"
               disabled={isLoading}
+              autoComplete="new-password"
             />
           </div>
 
@@ -327,11 +365,13 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">비밀번호 확인</label>
             <Input
-              ref={passwordConfirmRef}
               name="passwordConfirm"
               type="password"
+              value={formData.passwordConfirm}
+              onChange={handleChange}
               placeholder="비밀번호 재입력"
               disabled={isLoading}
+              autoComplete="new-password"
             />
           </div>
 
@@ -339,8 +379,9 @@ export function SignUpForm() {
           <div>
             <label className="text-sm font-medium">닉네임</label>
             <Input
-              ref={nicknameRef}
               name="nickname"
+              value={formData.nickname}
+              onChange={handleChange}
               placeholder="닉네임 입력"
               disabled={isLoading}
             />
@@ -351,10 +392,12 @@ export function SignUpForm() {
             <label className="text-sm font-medium">전화번호</label>
             <div className="flex gap-2">
               <Input
-                ref={phoneRef}
                 name="phone"
+                value={formData.phone}
+                onChange={handleChange}
                 placeholder="01012345678"
                 disabled={isLoading || codeSent}
+                autoComplete="tel"
               />
               <Button 
                 type="button" 
@@ -380,8 +423,9 @@ export function SignUpForm() {
               <label className="text-sm font-medium">인증번호</label>
               <div className="flex gap-2">
                 <Input
-                  ref={verificationCodeRef}
                   name="verificationCode"
+                  value={formData.verificationCode}
+                  onChange={handleChange}
                   placeholder="6자리 숫자"
                   maxLength={6}
                   disabled={isLoading}
@@ -404,28 +448,21 @@ export function SignUpForm() {
             </div>
           )}
 
-          {/* 에러 메시지 */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-
-          {/* 회원가입 버튼 */}
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={isLoading || !codeVerified}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {!codeVerified ? "인증 후 가입 가능" : "회원가입"}
           </Button>
-
-          {/* 로그인 링크 */}
-          <div className="text-center text-sm text-gray-600">
-            이미 계정이 있으신가요? <Link href="/auth/signin" className="text-blue-600 hover:underline">로그인</Link>
-          </div>
         </form>
+        <div className="text-center text-sm text-gray-500 mt-4">
+          이미 계정이 있으신가요?{" "}
+          <Link href="/auth/signin" className="text-primary hover:underline">
+            로그인
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )
