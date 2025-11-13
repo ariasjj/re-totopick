@@ -4,6 +4,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -179,9 +180,25 @@ export function SignUpForm() {
         return
       }
 
-      // 회원가입 성공
-      alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.")
-      router.push("/auth/signin")
+      // 회원가입 성공 - 자동 로그인
+      alert("회원가입이 완료되었습니다! 자동으로 로그인합니다.")
+      
+      // 자동 로그인 시도
+      const loginResult = await signIn("credentials", {
+        email: values.username, // 아이디로 로그인
+        password: values.password,
+        redirect: false,
+      })
+
+      if (loginResult?.ok) {
+        // 로그인 성공 - 홈으로 이동
+        router.push("/")
+        router.refresh()
+      } else {
+        // 로그인 실패 - 로그인 페이지로 이동
+        alert("회원가입은 완료되었으나 자동 로그인에 실패했습니다. 수동으로 로그인해주세요.")
+        router.push("/auth/signin")
+      }
     } catch (error) {
       console.error("회원가입 에러:", error)
       setError("회원가입 중 오류가 발생했습니다.")
