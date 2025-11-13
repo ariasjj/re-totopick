@@ -116,50 +116,72 @@ export function SignUpForm() {
     e.preventDefault()
     
     console.log("================================")
-    console.log("회원가입 시작")
+    console.log("🔵 회원가입 시작")
     console.log("================================")
     
     // 유효성 검사
     if (!formData.username || formData.username.length < 4) {
-      setError("아이디는 4자 이상이어야 합니다")
+      const msg = "아이디는 4자 이상이어야 합니다"
+      setError(msg)
+      alert(msg)
+      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!formData.email || !formData.email.includes("@")) {
-      setError("올바른 이메일을 입력하세요")
+      const msg = "올바른 이메일을 입력하세요"
+      setError(msg)
+      alert(msg)
+      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!formData.password || formData.password.length < 6) {
-      setError("비밀번호는 6자 이상이어야 합니다")
+      const msg = "비밀번호는 6자 이상이어야 합니다"
+      setError(msg)
+      alert(msg)
+      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (formData.password !== formData.passwordConfirm) {
-      setError("비밀번호가 일치하지 않습니다")
+      const msg = "비밀번호가 일치하지 않습니다"
+      setError(msg)
+      alert(msg)
+      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!formData.nickname || formData.nickname.length < 2) {
-      setError("닉네임은 2자 이상이어야 합니다")
+      const msg = "닉네임은 2자 이상이어야 합니다"
+      setError(msg)
+      alert(msg)
+      console.log("❌ 유효성 검사 실패:", msg)
       return
     }
     
     if (!codeVerified) {
-      setError("전화번호 인증을 먼저 완료하세요")
+      const msg = "전화번호 인증을 먼저 완료하세요"
+      setError(msg)
+      alert(msg)
+      console.log("❌ 인증 검사 실패:", msg)
       return
     }
+    
+    console.log("✅ 유효성 검사 통과")
     
     try {
       setIsLoading(true)
       setError("")
       
-      console.log("API 호출 준비...")
-      console.log("데이터:", {
+      console.log("🔵 API 호출 준비...")
+      console.log("📤 전송할 데이터:", {
         username: formData.username,
         email: formData.email,
+        password: "***",
         nickname: formData.nickname,
-        phone: formData.phone
+        phone: formData.phone,
+        codeVerified
       })
       
       const response = await fetch("/api/auth/signup", {
@@ -174,23 +196,39 @@ export function SignUpForm() {
         }),
       })
       
-      console.log("API 응답 상태:", response.status)
+      console.log("📥 API 응답 상태:", response.status, response.statusText)
+      console.log("📥 API 응답 OK:", response.ok)
       
       const result = await response.json()
-      console.log("API 응답 데이터:", result)
+      console.log("📥 API 응답 데이터:", result)
       
       if (!response.ok) {
-        throw new Error(result.error || "회원가입에 실패했습니다")
+        const errorMsg = result.error || "회원가입에 실패했습니다"
+        console.log("❌ API 실패:", errorMsg)
+        console.log("================================")
+        alert(`회원가입 실패!\n\n${errorMsg}`)
+        throw new Error(errorMsg)
       }
       
-      console.log("✅ 회원가입 성공!")
+      console.log("✅ 회원가입 API 성공!")
+      console.log("✅ 사용자 정보:", result.user)
       console.log("================================")
+      
+      alert("🎉 회원가입 완료!\n\n1,000P가 지급되었습니다.")
       setSuccess(true)
       
     } catch (err: any) {
       console.error("❌ 회원가입 에러:", err)
+      console.log("❌ 에러 메시지:", err.message)
+      console.log("❌ 전체 에러:", err)
       console.log("================================")
-      setError(err.message || "회원가입 중 오류가 발생했습니다")
+      
+      const errorMsg = err.message || "회원가입 중 오류가 발생했습니다"
+      setError(errorMsg)
+      
+      if (!alert) {
+        alert(`회원가입 오류!\n\n${errorMsg}`)
+      }
     } finally {
       setIsLoading(false)
     }
