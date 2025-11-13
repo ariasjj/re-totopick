@@ -92,12 +92,14 @@ npm run dev
 ## 🔑 기본 계정 정보
 
 ### 관리자 계정
+- 아이디: `admin`
 - 이메일: `admin@totopick.com`
-- 비밀번호: `admin1234`
+- 비밀번호: `admin1234!`
 
 ### 테스트 사용자
+- 아이디: `testuser`
 - 이메일: `user@test.com`
-- 비밀번호: `test1234`
+- 비밀번호: `user123!`
 
 ## 📱 핸드폰 인증 (테스트 모드)
 
@@ -170,13 +172,16 @@ totopick/
 - 🎯 **[토토사이트 배너 관리](docs/TOTO-SITE-BANNER-GUIDE.md)** - 배너 광고 추가 및 관리 방법
 - 🤖 **[자동 게시글 업로드 가이드](docs/AUTO-POST-GUIDE.md)** - 매일 자동으로 게시글 올리기
 
-### 심화 가이드
+### 개발자 가이드
+- 🔐 **[회원가입 및 로그인 시스템 구축 가이드](docs/AUTH-SYSTEM-GUIDE.md)** - 에러 없는 인증 시스템 만들기 (필독!)
+- 📱 **[SMS 인증 전환 가이드](docs/SMS-SETUP.md)** - 실제 SMS 발송 설정
+- 👑 **[관리자 매뉴얼](docs/ADMIN-GUIDE.md)** - 관리자 기능 사용법
+
+### 배포 가이드
 - 🌐 **[GitHub & Vercel 배포 완벽 가이드](docs/GITHUB-VERCEL-DEPLOYMENT.md)** - Git 설치부터 배포까지 A to Z
 - 🚀 **[정식 배포 가이드](docs/PRODUCTION-DEPLOYMENT.md)** - 커스텀 도메인, 서버 추천, 프로덕션 환경 구축
 - 📦 **[Vercel 배포 가이드](docs/VERCEL-DEPLOYMENT.md)** - 사이트를 실제로 배포하기
 - 🔧 **[Git 설치 가이드](docs/GIT-INSTALLATION.md)** - Git/GitHub Desktop 설치 방법
-- 📱 [SMS 인증 전환 가이드](docs/SMS-SETUP.md)
-- 👑 [관리자 매뉴얼](docs/ADMIN-GUIDE.md)
 
 ## 🚀 배포
 
@@ -193,13 +198,20 @@ totopick/
 ## 📝 개발 스크립트
 
 ```bash
+# 개발 및 빌드
 npm run dev          # 개발 서버 실행
 npm run build        # 프로덕션 빌드
 npm run start        # 프로덕션 서버 실행
 npm run lint         # ESLint 실행
+
+# 데이터베이스
 npm run db:push      # Prisma 스키마 동기화
 npm run db:seed      # 데이터베이스 초기화
 npm run db:studio    # Prisma Studio 실행
+
+# 유틸리티
+npm run check-user <username>  # 사용자 계정 확인
+# 예시: npm run check-user testuser
 ```
 
 ## 🤝 기여
