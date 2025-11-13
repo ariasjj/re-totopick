@@ -35,35 +35,35 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="relative h-auto px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+                  className="relative h-auto px-4 py-2.5 rounded-xl hover:bg-accent transition-all duration-200 border border-transparent hover:border-primary/20"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9 border-2 border-primary/20">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm">
-                        {session.user?.name?.charAt(0) || "U"}
+                    <Avatar className="h-12 w-12 border-3 border-primary/30 shadow-lg">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-700 text-white font-black text-xl shadow-inner">
+                        {session.user?.name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col items-start">
-                      <span className="text-sm font-semibold text-foreground">
+                    <div className="flex flex-col items-start min-w-[100px]">
+                      <span className="text-base font-bold text-foreground leading-tight">
                         {session.user?.name}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        내 정보
+                      <span className="text-xs text-primary/70 font-medium">
+                        내 정보 보기
                       </span>
                     </div>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center justify-start gap-2 p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-t-lg">
-                  <Avatar className="h-10 w-10 border-2 border-primary/30">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                      {session.user?.name?.charAt(0) || "U"}
+              <DropdownMenuContent align="end" className="w-64">
+                <div className="flex items-center justify-start gap-3 p-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-t-lg">
+                  <Avatar className="h-14 w-14 border-3 border-primary/40 shadow-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-700 text-white font-black text-2xl shadow-inner">
+                      {session.user?.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-bold text-foreground">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex flex-col space-y-1.5 flex-1 min-w-0">
+                    <p className="text-base font-bold text-foreground truncate">{session.user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {session.user?.email}
                     </p>
                   </div>
