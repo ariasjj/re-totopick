@@ -151,7 +151,10 @@ export function SignUpForm() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log("🔵 onSubmit 시작:", values)
+    
     if (!codeVerified) {
+      console.log("❌ 전화번호 인증 미완료")
       setError("전화번호 인증을 완료해주세요.")
       return
     }
@@ -160,6 +163,7 @@ export function SignUpForm() {
       setIsLoading(true)
       setError("")
 
+      console.log("🔵 회원가입 API 호출 시작...")
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -172,18 +176,25 @@ export function SignUpForm() {
         }),
       })
 
+      console.log("🔵 API 응답 상태:", res.status, res.statusText)
       const data = await res.json()
+      console.log("🔵 API 응답 데이터:", data)
 
       if (!res.ok) {
+        console.log("❌ 회원가입 실패:", data.error)
         setError(data.error || "회원가입에 실패했습니다.")
+        alert(`❌ 회원가입 실패:\n\n${data.error || "회원가입에 실패했습니다."}`)
         return
       }
 
       // 회원가입 성공
+      console.log("✅ 회원가입 성공!")
       setSignupSuccess(true)
     } catch (error) {
-      console.error("회원가입 에러:", error)
-      setError("회원가입 중 오류가 발생했습니다.")
+      console.error("❌ 회원가입 에러:", error)
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류"
+      setError(`회원가입 중 오류가 발생했습니다. (${errorMessage})`)
+      alert(`❌ 회원가입 중 오류:\n\n${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
