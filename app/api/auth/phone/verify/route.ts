@@ -41,13 +41,15 @@ export async function POST(request: NextRequest) {
           phone,
           code,
           verified: true,
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5분 후
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10분 후
         },
       })
 
+      console.log('✅ 테스트 모드 인증 완료 - 10분간 유효')
+
       return NextResponse.json({
         success: true,
-        message: "전화번호 인증이 완료되었습니다. (테스트 모드)",
+        message: "전화번호 인증이 완료되었습니다. (10분간 유효)",
       })
     }
 

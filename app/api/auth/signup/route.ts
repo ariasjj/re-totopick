@@ -94,6 +94,9 @@ export async function POST(request: NextRequest) {
       where: {
         phone,
         verified: true,
+        expiresAt: {
+          gt: new Date(), // 만료되지 않은 인증만
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -101,9 +104,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!verification) {
-      console.log('❌ 전화번호 인증 실패')
+      console.log('❌ 전화번호 인증 실패 또는 만료됨')
       return NextResponse.json(
-        { error: "전화번호 인증이 완료되지 않았습니다." },
+        { error: "전화번호 인증이 완료되지 않았거나 만료되었습니다. 다시 인증해주세요." },
         { status: 400 }
       )
     }

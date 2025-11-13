@@ -134,9 +134,11 @@ export function SignUpForm() {
       console.log("📥 인증 API 응답:", res.status)
 
       if (res.ok) {
+        const data = await res.json()
         console.log("✅ 전화번호 인증 완료!")
+        console.log("📥 응답 데이터:", data)
         setPhoneVerified(true)
-        alert("✅ 전화번호 인증이 완료되었습니다!\n\n이제 '회원가입' 버튼을 클릭하세요.")
+        alert("✅ 전화번호 인증이 완료되었습니다!\n\n⏰ 인증은 10분간 유효합니다.\n\n이제 '회원가입' 버튼을 클릭하세요.")
       } else {
         const data = await res.json()
         console.log("❌ 인증 실패:", data)
