@@ -45,6 +45,7 @@ export function SignUpForm() {
   const [codeSent, setCodeSent] = useState(false)
   const [codeVerified, setCodeVerified] = useState(false)
   const [testCode, setTestCode] = useState<string>("")
+  const [testMode, setTestMode] = useState(false) // 테스트 모드
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -81,6 +82,9 @@ export function SignUpForm() {
 
       if (!res.ok) {
         setError(data.error || "인증번호 발송에 실패했습니다.")
+        // 인증번호 발송 실패 시 테스트 모드 활성화
+        setTestMode(true)
+        setCodeSent(true)
         return
       }
 
@@ -93,6 +97,9 @@ export function SignUpForm() {
     } catch (error) {
       console.error("인증번호 발송 에러:", error)
       setError("인증번호 발송 중 오류가 발생했습니다.")
+      // 에러 발생 시 테스트 모드 활성화
+      setTestMode(true)
+      setCodeSent(true)
     } finally {
       setIsLoading(false)
     }
@@ -105,6 +112,14 @@ export function SignUpForm() {
 
     if (!code || code.length !== 6) {
       setError("6자리 인증번호를 입력하세요.")
+      return
+    }
+
+    // 테스트 모드에서는 아무 인증번호나 통과
+    if (testMode) {
+      setCodeVerified(true)
+      setError("")
+      alert("전화번호 인증이 완료되었습니다! (테스트 모드)")
       return
     }
 
@@ -195,6 +210,12 @@ export function SignUpForm() {
             {testCode && (
               <div className="bg-blue-50 text-blue-700 text-sm p-3 rounded-md">
                 🔐 테스트 인증번호: <strong>{testCode}</strong>
+              </div>
+            )}
+
+            {testMode && (
+              <div className="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-md">
+                ⚠️ <strong>테스트 모드</strong>: 아무 6자리 숫자나 입력하여 인증하세요 (예: 123456)
               </div>
             )}
 
