@@ -23,7 +23,7 @@ import Link from "next/link"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
-  email: z.string().email("올바른 이메일 형식이 아닙니다."),
+  email: z.string().min(1, "이메일 또는 아이디를 입력하세요."),
   password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다."),
 })
 
@@ -57,7 +57,7 @@ export function SignInForm() {
 
       // 에러 처리
       if (result?.error) {
-        setError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        setError("이메일/아이디 또는 비밀번호가 올바르지 않습니다.")
         return
       }
 
@@ -96,11 +96,11 @@ export function SignInForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>이메일</FormLabel>
+                  <FormLabel>이메일 또는 아이디</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="example@email.com"
-                      type="email"
+                      placeholder="이메일 또는 아이디를 입력하세요"
+                      type="text"
                       disabled={isLoading}
                       {...field}
                     />
