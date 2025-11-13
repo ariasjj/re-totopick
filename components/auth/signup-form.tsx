@@ -510,10 +510,24 @@ export function SignUpForm() {
                   <p className="text-sm text-green-700 mt-1">⏰ 인증은 10분간 유효합니다</p>
                 </div>
               </div>
+              <div className="bg-red-50 border-2 border-red-400 rounded-lg p-5 mt-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-lg font-bold text-red-900 mb-2">🚨 중요: 회원가입이 아직 완료되지 않았습니다!</p>
+                    <p className="text-base font-semibold text-red-800 mb-3">
+                      반드시 아래 <span className="bg-red-200 px-2 py-1 rounded font-black text-red-900">'회원가입 완료하기'</span> 버튼을 클릭해야 합니다!
+                    </p>
+                    <p className="text-sm text-red-700">
+                      버튼을 클릭하지 않으면 계정이 생성되지 않아 로그인할 수 없습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="bg-white rounded-lg p-4 mt-3 border-2 border-green-300">
                 <p className="text-base font-semibold text-green-800 flex items-center gap-2">
                   <span className="text-2xl">👇</span>
-                  <span>이제 아래 <span className="text-green-600 underline">'회원가입 완료하기'</span> 버튼을 클릭하세요!</span>
+                  <span>지금 바로 아래 버튼을 클릭하세요!</span>
                 </p>
               </div>
             </div>
