@@ -41,14 +41,20 @@ export function SignUpForm() {
 
   // 인증번호 발송
   const sendCode = async () => {
+    console.log("🔵 [sendCode] 시작, 전화번호:", formData.phone)
+    
     if (!/^010\d{8}$/.test(formData.phone)) {
-      setError("010으로 시작하는 11자리 숫자를 입력하세요")
+      const msg = "010으로 시작하는 11자리 숫자를 입력하세요"
+      console.log("❌ [sendCode] 전화번호 형식 오류")
+      setError(msg)
+      alert(msg)
       return
     }
 
     try {
       setIsLoading(true)
       setError("")
+      console.log("🔵 [sendCode] API 호출 중...")
 
       const res = await fetch("/api/auth/phone/send", {
         method: "POST",
@@ -57,21 +63,29 @@ export function SignUpForm() {
       })
 
       const data = await res.json()
+      console.log("🔵 [sendCode] API 응답:", data)
       
       if (data.code) {
         setTestCode(data.code)
-        alert(`테스트 인증번호: ${data.code}`)
+        console.log("🔵 [sendCode] 테스트 코드 설정:", data.code)
+        alert(`✅ 테스트 인증번호: ${data.code}`)
+      } else if (data.error) {
+        console.log("⚠️ [sendCode] API 에러:", data.error)
+        alert(`⚠️ ${data.error}`)
       }
       
       setCodeSent(true)
-      alert("인증번호가 발송되었습니다!")
+      console.log("✅ [sendCode] codeSent = true 설정 완료")
+      alert("✅ 인증번호가 발송되었습니다!")
     } catch (err) {
-      console.error(err)
+      console.error("❌ [sendCode] 에러:", err)
       setTestCode("123456")
       setCodeSent(true)
-      alert("테스트 모드: 아무 6자리나 입력하세요")
+      console.log("⚠️ [sendCode] 테스트 모드 활성화")
+      alert("⚠️ 테스트 모드: 123456 입력하세요")
     } finally {
       setIsLoading(false)
+      console.log("🔵 [sendCode] 종료")
     }
   }
 
