@@ -6,152 +6,97 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
-import { Loader2 } from "lucide-react"
-
-// 폼 데이터 타입 정의
-interface FormData {
-  username: string
-  email: string
-  password: string
-  passwordConfirm: string
-  nickname: string
-  phone: string
-  verificationCode: string
-}
+import { Loader2, CheckCircle2, AlertCircle, Phone } from "lucide-react"
 
 export function SignUpForm() {
   const router = useRouter()
+  
+  // 상태
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   
-  // Controlled Inputs - 명확한 상태 관리
-  const [formData, setFormData] = useState<FormData>({
-    username: "",
-    email: "",
-    password: "",
-    passwordConfirm: "",
-    nickname: "",
-    phone: "",
-    verificationCode: ""
-  })
+  // 폼 데이터
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [passwordConfirm, setPasswordConfirm] = useState("")
+  const [nickname, setNickname] = useState("")
+  const [phone, setPhone] = useState("")
   
-  // 인증 상태
-  const [codeSent, setCodeSent] = useState(false)
-  const [codeVerified, setCodeVerified] = useState(false)
+  // 인증 관련
+  const [verificationCode, setVerificationCode] = useState("")
   const [testCode, setTestCode] = useState("")
-
-  // 입력값 변경 핸들러
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    console.log(`🔵 [handleChange] ${name}:`, value.substring(0, 20))
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-    setError("")
-  }
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [showCodeInput, setShowCodeInput] = useState(false)
 
   // 인증번호 발송
-  const sendCode = async () => {
-    const phone = formData.phone.trim()
-    console.log("🔵 [sendCode] 시작, 전화번호:", phone)
-    
-    if (!/^010\d{8}$/.test(phone)) {
-      const msg = "010으로 시작하는 11자리 숫자를 입력하세요"
-      console.log("❌ [sendCode] 전화번호 형식 오류")
-      setError(msg)
-      alert(msg)
+  const handleSendCode = async () => {
+    if (!phone || !/^010\d{8}$/.test(phone)) {
+      alert("❌ 전화번호는 010으로 시작하는 11자리 숫자여야 합니다")
       return
     }
 
+    setIsLoading(true)
+    setError("")
+    
     try {
-      setIsLoading(true)
-      setError("")
-      console.log("🔵 [sendCode] API 호출 중...")
-
       const res = await fetch("/api/auth/phone/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone }),
       })
 
-      console.log("🔵 [sendCode] API 응답 상태:", res.status)
       const data = await res.json()
-      console.log("🔵 [sendCode] API 응답 데이터:", data)
-      
+
       if (data.code) {
         setTestCode(data.code)
-        console.log("🔵 [sendCode] 테스트 코드 설정:", data.code)
-        alert(`✅ 테스트 인증번호: ${data.code}`)
-      } else if (data.error) {
-        console.log("⚠️ [sendCode] API 에러:", data.error)
-        alert(`⚠️ ${data.error}`)
+        setShowCodeInput(true)
+        alert(`✅ 인증번호: ${data.code}\n\n위 번호를 입력해주세요`)
+      } else {
+        setTestCode("123456")
+        setShowCodeInput(true)
+        alert("⚠️ SMS 발송 실패. 테스트 모드: 123456")
       }
-      
-      setCodeSent(true)
-      console.log("✅ [sendCode] codeSent = true 설정 완료")
-      alert("✅ 인증번호가 발송되었습니다!")
-    } catch (err) {
-      console.error("❌ [sendCode] 에러:", err)
+    } catch (error) {
+      console.error(error)
       setTestCode("123456")
-      setCodeSent(true)
-      console.log("⚠️ [sendCode] 테스트 모드 활성화")
-      alert("⚠️ 테스트 모드: 123456 입력하세요")
+      setShowCodeInput(true)
+      alert("⚠️ 오류 발생. 테스트 모드: 123456")
     } finally {
       setIsLoading(false)
-      console.log("🔵 [sendCode] 종료")
     }
   }
 
   // 인증번호 확인
-  const verifyCode = async () => {
-    const { verificationCode, phone } = formData
-    console.log("🔵 [verifyCode] 시작, 코드:", verificationCode)
-    
-    if (verificationCode.length !== 6) {
-      const msg = "6자리 인증번호를 입력하세요"
-      setError(msg)
-      alert(msg)
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      alert("❌ 6자리 인증번호를 입력해주세요")
       return
     }
 
-    try {
-      setIsLoading(true)
-      setError("")
-      console.log("🔵 [verifyCode] API 호출 중...")
+    setIsLoading(true)
+    setError("")
 
+    try {
       const res = await fetch("/api/auth/phone/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          phone, 
-          code: verificationCode,
-          testMode: true
-        }),
+        body: JSON.stringify({ phone, code: verificationCode, testMode: true }),
       })
 
-      console.log("🔵 [verifyCode] API 응답 상태:", res.status)
-      
       if (res.ok) {
-        setCodeVerified(true)
-        console.log("✅ [verifyCode] 인증 성공")
-        alert("✅ 인증이 완료되었습니다!")
+        setPhoneVerified(true)
+        alert("✅ 인증 완료!")
       } else {
         const data = await res.json()
-        const msg = data.error || "인증에 실패했습니다"
-        console.log("❌ [verifyCode] 인증 실패:", msg)
-        setError(msg)
-        alert(`❌ ${msg}`)
+        alert(`❌ ${data.error || "인증 실패"}`)
       }
-    } catch (err) {
-      console.error("❌ [verifyCode] 에러:", err)
-      const msg = "인증 중 오류가 발생했습니다"
-      setError(msg)
-      alert(`❌ ${msg}`)
+    } catch (error) {
+      console.error(error)
+      alert("❌ 인증 중 오류 발생")
     } finally {
       setIsLoading(false)
-      console.log("🔵 [verifyCode] 종료")
     }
   }
 
@@ -159,310 +104,308 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const { username, email, password, passwordConfirm, nickname, phone } = formData
-    
-    console.log("================================")
-    console.log("🔵 [handleSubmit] 회원가입 시작")
-    console.log("================================")
-    console.log("📝 입력 데이터:", {
-      username,
-      email,
-      nickname,
-      phone,
-      password: password ? "***" : "(비어있음)",
-      passwordConfirm: passwordConfirm ? "***" : "(비어있음)",
-      codeVerified
-    })
-    
-    // 유효성 검사
-    if (!username || username.trim().length < 4) {
-      const msg = "아이디는 4자 이상이어야 합니다"
-      console.log("❌ 유효성 검사 실패:", msg)
-      setError(msg)
-      alert(msg)
+    // 검증
+    if (!username || username.length < 4) {
+      setError("아이디는 4자 이상이어야 합니다")
+      alert("❌ 아이디는 4자 이상이어야 합니다")
       return
     }
-    
     if (!email || !email.includes("@")) {
-      const msg = "올바른 이메일을 입력하세요"
-      console.log("❌ 유효성 검사 실패:", msg)
-      setError(msg)
-      alert(msg)
+      setError("올바른 이메일을 입력해주세요")
+      alert("❌ 올바른 이메일을 입력해주세요")
       return
     }
-    
     if (!password || password.length < 6) {
-      const msg = "비밀번호는 6자 이상이어야 합니다"
-      console.log("❌ 유효성 검사 실패:", msg, "현재 길이:", password.length)
-      setError(msg)
-      alert(msg)
+      setError("비밀번호는 6자 이상이어야 합니다")
+      alert("❌ 비밀번호는 6자 이상이어야 합니다")
       return
     }
-    
     if (password !== passwordConfirm) {
-      const msg = "비밀번호가 일치하지 않습니다"
-      console.log("❌ 유효성 검사 실패:", msg)
-      setError(msg)
-      alert(msg)
+      setError("비밀번호가 일치하지 않습니다")
+      alert("❌ 비밀번호가 일치하지 않습니다")
       return
     }
-    
-    if (!nickname || nickname.trim().length < 2) {
-      const msg = "닉네임은 2자 이상이어야 합니다"
-      console.log("❌ 유효성 검사 실패:", msg)
-      setError(msg)
-      alert(msg)
+    if (!nickname || nickname.length < 2) {
+      setError("닉네임은 2자 이상이어야 합니다")
+      alert("❌ 닉네임은 2자 이상이어야 합니다")
       return
     }
-    
-    if (!codeVerified) {
-      const msg = "전화번호 인증을 먼저 완료하세요"
-      console.log("❌ 인증 검사 실패:", msg)
-      setError(msg)
-      alert(msg)
+    if (!phoneVerified) {
+      setError("전화번호 인증을 완료해주세요")
+      alert("❌ 전화번호 인증을 완료해주세요")
       return
     }
-    
-    console.log("✅ 모든 유효성 검사 통과")
-    
+
+    setIsLoading(true)
+    setError("")
+
     try {
-      setIsLoading(true)
-      setError("")
+      console.log("🔵 회원가입 API 호출")
       
-      console.log("🔵 API 호출 시작...")
-      
-      const requestBody = {
-        username: username.trim(),
-        email: email.trim(),
-        password,
-        nickname: nickname.trim(),
-        phone: phone.trim(),
-      }
-      
-      console.log("📤 API 요청 데이터:", {
-        ...requestBody,
-        password: "***"
-      })
-      
-      const response = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ username, email, password, nickname, phone }),
       })
+
+      console.log("📥 응답:", res.status)
       
-      console.log("📥 API 응답 상태:", response.status, response.statusText)
-      console.log("📥 API 응답 OK:", response.ok)
-      
-      const result = await response.json()
-      console.log("📥 API 응답 데이터:", result)
-      
-      if (!response.ok) {
-        const errorMsg = result.error || "회원가입에 실패했습니다"
-        console.log("❌ API 실패:", errorMsg)
-        console.log("================================")
-        setError(errorMsg)
-        alert(`❌ 회원가입 실패!\n\n${errorMsg}`)
-        return
+      const data = await res.json()
+      console.log("📥 데이터:", data)
+
+      if (!res.ok) {
+        throw new Error(data.error || "회원가입 실패")
       }
-      
-      console.log("✅ 회원가입 API 성공!")
-      console.log("================================")
+
+      console.log("✅ 회원가입 성공!")
       setSuccess(true)
-      alert("🎉 회원가입 완료! 가입 축하 1,000P가 지급되었습니다.")
       
-    } catch (err) {
-      console.error("❌ 회원가입 중 에러 발생:", err)
-      const msg = (err as Error).message || "회원가입 중 오류가 발생했습니다"
-      console.log("================================")
+    } catch (error: any) {
+      console.error("❌ 에러:", error)
+      const msg = error.message || "회원가입 중 오류 발생"
       setError(msg)
-      alert(`❌ 회원가입 오류!\n\n${msg}`)
+      alert(`❌ ${msg}`)
     } finally {
       setIsLoading(false)
     }
   }
 
+  // 성공 화면
   if (success) {
     return (
       <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">🎉 회원가입 완료!</CardTitle>
-          <CardDescription className="text-center">토토픽에 오신 것을 환영합니다</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-            <p className="text-lg font-semibold text-green-800 mb-2">
-              ✨ 회원가입이 완료되었습니다!
-            </p>
-            <p className="text-gray-600">
-              가입 축하 <span className="font-bold text-green-600">1,000P</span>가 지급되었습니다
-            </p>
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-4 w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircle2 className="w-12 h-12 text-green-600" />
           </div>
-          <Button onClick={() => router.push("/auth/signin")} className="w-full">
-            로그인하러 가기
+          <CardTitle className="text-3xl font-bold">회원가입 완료!</CardTitle>
+          <CardDescription className="text-lg">토토픽에 오신 것을 환영합니다</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-8 text-center shadow-sm">
+            <p className="text-2xl font-bold text-green-800 mb-4">
+              🎉 가입 축하합니다! 🎉
+            </p>
+            <div className="text-center">
+              <p className="text-gray-700 text-lg mb-2">가입 축하 포인트</p>
+              <p className="text-5xl font-bold text-green-600">1,000P</p>
+              <p className="text-gray-600 mt-2">적립 완료</p>
+            </div>
+          </div>
+          <Button 
+            onClick={() => router.push("/auth/signin")} 
+            className="w-full h-14 text-lg font-semibold"
+            size="lg"
+          >
+            로그인하러 가기 →
           </Button>
         </CardContent>
       </Card>
     )
   }
 
+  // 폼 화면
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>회원가입</CardTitle>
+        <CardTitle className="text-2xl">회원가입</CardTitle>
         <CardDescription>토토픽 계정을 만들고 다양한 혜택을 받으세요</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 에러 표시 */}
           {error && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded">
-              <p className="text-red-500 text-sm text-center">{error}</p>
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
           {/* 아이디 */}
-          <div>
-            <label className="text-sm font-medium">아이디</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              아이디 <span className="text-red-500">*</span>
+            </label>
             <Input
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="영문, 숫자, _ 만 입력 가능 (4-20자)"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value)
+                setError("")
+              }}
+              placeholder="4자 이상 (영문, 숫자, _)"
               disabled={isLoading}
-              autoComplete="username"
+              className="h-11"
             />
-            <p className="text-xs text-gray-500 mt-1">로그인 시 사용할 아이디입니다</p>
           </div>
 
           {/* 이메일 */}
-          <div>
-            <label className="text-sm font-medium">이메일</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              이메일 <span className="text-red-500">*</span>
+            </label>
             <Input
-              name="email"
               type="email"
-              value={formData.email}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setError("")
+              }}
               placeholder="example@email.com"
               disabled={isLoading}
-              autoComplete="email"
+              className="h-11"
             />
           </div>
 
           {/* 비밀번호 */}
-          <div>
-            <label className="text-sm font-medium">비밀번호</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              비밀번호 <span className="text-red-500">*</span>
+            </label>
             <Input
-              name="password"
               type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="최소 6자 이상"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setError("")
+              }}
+              placeholder="6자 이상"
               disabled={isLoading}
-              autoComplete="new-password"
+              className="h-11"
             />
           </div>
 
           {/* 비밀번호 확인 */}
-          <div>
-            <label className="text-sm font-medium">비밀번호 확인</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              비밀번호 확인 <span className="text-red-500">*</span>
+            </label>
             <Input
-              name="passwordConfirm"
               type="password"
-              value={formData.passwordConfirm}
-              onChange={handleChange}
+              value={passwordConfirm}
+              onChange={(e) => {
+                setPasswordConfirm(e.target.value)
+                setError("")
+              }}
               placeholder="비밀번호 재입력"
               disabled={isLoading}
-              autoComplete="new-password"
+              className="h-11"
             />
           </div>
 
           {/* 닉네임 */}
-          <div>
-            <label className="text-sm font-medium">닉네임</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              닉네임 <span className="text-red-500">*</span>
+            </label>
             <Input
-              name="nickname"
-              value={formData.nickname}
-              onChange={handleChange}
-              placeholder="닉네임 입력"
+              value={nickname}
+              onChange={(e) => {
+                setNickname(e.target.value)
+                setError("")
+              }}
+              placeholder="2자 이상"
               disabled={isLoading}
+              className="h-11"
             />
           </div>
 
           {/* 전화번호 */}
-          <div>
-            <label className="text-sm font-medium">전화번호</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">
+              전화번호 <span className="text-red-500">*</span>
+            </label>
             <div className="flex gap-2">
               <Input
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value.replace(/[^0-9]/g, ''))
+                  setError("")
+                }}
                 placeholder="01012345678"
-                disabled={isLoading || codeSent}
-                autoComplete="tel"
+                disabled={isLoading || phoneVerified}
+                maxLength={11}
+                className="h-11"
               />
-              <Button 
-                type="button" 
-                onClick={sendCode} 
-                disabled={isLoading || codeSent}
+              <Button
+                type="button"
+                onClick={handleSendCode}
+                disabled={isLoading || phoneVerified}
+                className="whitespace-nowrap px-6"
+                variant={phoneVerified ? "secondary" : "default"}
               >
-                인증번호
+                {phoneVerified ? "인증완료" : "인증번호"}
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">하이픈(-) 없이 숫자만 입력하세요</p>
+            <p className="text-xs text-gray-500">하이픈(-) 없이 숫자만 입력</p>
           </div>
 
-          {/* 인증번호 */}
-          {codeSent && !codeVerified && (
-            <div>
+          {/* 인증번호 입력 */}
+          {showCodeInput && !phoneVerified && (
+            <div className="space-y-3">
               {testCode && (
-                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded mb-2">
-                  <p className="text-sm text-yellow-800">
-                    🔒 테스트 인증번호: <strong>{testCode}</strong>
-                  </p>
+                <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 flex items-start gap-3">
+                  <Phone className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-900 mb-1">테스트 인증번호</p>
+                    <p className="text-2xl font-bold text-amber-700">{testCode}</p>
+                  </div>
                 </div>
               )}
-              <label className="text-sm font-medium">인증번호</label>
-              <div className="flex gap-2">
-                <Input
-                  name="verificationCode"
-                  value={formData.verificationCode}
-                  onChange={handleChange}
-                  placeholder="6자리 숫자"
-                  maxLength={6}
-                  disabled={isLoading}
-                />
-                <Button 
-                  type="button" 
-                  onClick={verifyCode} 
-                  disabled={isLoading}
-                >
-                  확인
-                </Button>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  인증번호 <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={verificationCode}
+                    onChange={(e) => {
+                      setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))
+                      setError("")
+                    }}
+                    placeholder="6자리 숫자"
+                    disabled={isLoading}
+                    maxLength={6}
+                    className="h-11"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleVerifyCode}
+                    disabled={isLoading}
+                    className="whitespace-nowrap px-8"
+                  >
+                    확인
+                  </Button>
+                </div>
               </div>
             </div>
           )}
 
           {/* 인증 완료 표시 */}
-          {codeVerified && (
-            <div className="bg-green-50 border border-green-200 p-3 rounded">
-              <p className="text-sm text-green-800">✅ 전화번호 인증이 완료되었습니다</p>
+          {phoneVerified && (
+            <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <p className="text-sm font-semibold text-green-800">전화번호 인증 완료</p>
             </div>
           )}
 
+          {/* 제출 버튼 */}
           <Button
             type="submit"
-            className="w-full"
-            disabled={isLoading || !codeVerified}
+            className="w-full h-12 text-base font-semibold mt-6"
+            disabled={isLoading || !phoneVerified}
+            size="lg"
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {!codeVerified ? "인증 후 가입 가능" : "회원가입"}
+            {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            {!phoneVerified ? "전화번호 인증 필요" : "회원가입"}
           </Button>
+
+          <div className="text-center text-sm text-gray-600 mt-6 pt-4 border-t">
+            이미 계정이 있으신가요?{" "}
+            <Link href="/auth/signin" className="text-primary hover:underline font-semibold">
+              로그인
+            </Link>
+          </div>
         </form>
-        <div className="text-center text-sm text-gray-500 mt-4">
-          이미 계정이 있으신가요?{" "}
-          <Link href="/auth/signin" className="text-primary hover:underline">
-            로그인
-          </Link>
-        </div>
       </CardContent>
     </Card>
   )
