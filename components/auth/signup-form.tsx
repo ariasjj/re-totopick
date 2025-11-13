@@ -32,8 +32,21 @@ export function SignUpForm() {
 
   // 인증번호 발송
   const handleSendCode = async () => {
-    if (!phone || !/^010\d{8}$/.test(phone)) {
-      alert("❌ 전화번호는 010으로 시작하는 11자리 숫자여야 합니다")
+    console.log("📱 전화번호 확인:", phone, "길이:", phone.length)
+    
+    // 전화번호 검증
+    if (!phone || phone.trim() === "") {
+      alert("❌ 전화번호를 입력해주세요")
+      return
+    }
+    
+    if (phone.length !== 11) {
+      alert(`❌ 전화번호는 정확히 11자리여야 합니다\n(현재 ${phone.length}자리 입력됨)`)
+      return
+    }
+    
+    if (!/^010\d{8}$/.test(phone)) {
+      alert("❌ 전화번호는 010으로 시작해야 합니다")
       return
     }
 
@@ -349,10 +362,12 @@ export function SignUpForm() {
               <Input
                 value={phone}
                 onChange={(e) => {
-                  setPhone(e.target.value.replace(/[^0-9]/g, ''))
+                  const value = e.target.value.replace(/[^0-9]/g, '')
+                  console.log("📱 전화번호 입력:", value, "길이:", value.length)
+                  setPhone(value)
                   setError("")
                 }}
-                placeholder="01012345678"
+                placeholder="01012345678 (숫자만 11자리)"
                 disabled={isLoading || phoneVerified}
                 maxLength={11}
                 className="h-11"
